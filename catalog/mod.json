@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "snapshot-inspector",
+  "name": "Snapshot Inspector",
+  "description": "Inspect snapshot membership, navigate to controls, create linked control pages, and compare saved values without recalling snapshots.",
+  "author": "joshua-small",
+  "helpUrl": "https://github.com/joshua-small/qsys-snapshot-inspector",
+  "thumbnail": "catalog/artwork/avitex.ico"
+}
