@@ -4,11 +4,13 @@ using Designer.Modules.SnapshotInspector;
 int checks=0;
 void Check(bool value,string message){if(!value)throw new Exception(message);checks++;}
 void Reject(byte[] bytes,string message){try{SnapshotPayload.Read(bytes);}catch(Exception e)when(e is InvalidDataException or ArgumentException){checks++;return;}throw new Exception(message);}
-if(args.Length!=1)throw new Exception("Pass the directory of the retained native long-text fixture.");
+if(args.Length>1)throw new Exception("Usage: snapshot-checks [native-fixture-directory]");
+if(args.Length==1)
+{
 using var fixture=JsonDocument.Parse(File.ReadAllText(Path.Combine(args[0],"fixture.json")));
 string bank=fixture.RootElement.GetProperty("bankId").GetString()!,gain=fixture.RootElement.GetProperty("encodedGain").GetString()!,script=fixture.RootElement.GetProperty("encodedScript").GetString()!;
-var bytes=File.ReadAllBytes(Path.Combine(args[0],"controlset."+bank+".snapshot.1"));
-var first=SnapshotPayload.Read(bytes);var second=SnapshotPayload.Read(File.ReadAllBytes(Path.Combine(args[0],"controlset."+bank+".snapshot.2")));
+var nativeBytes=File.ReadAllBytes(Path.Combine(args[0],"controlset."+bank+".snapshot.1"));
+var first=SnapshotPayload.Read(nativeBytes);var second=SnapshotPayload.Read(File.ReadAllBytes(Path.Combine(args[0],"controlset."+bank+".snapshot.2")));
 Check(first.Count==7&&second.Count==7,"Real fixture must decode all seven controls, not a partial subset.");
 Check(first[gain+"_gain"].Number==-12&&second[gain+"_gain"].Number==-6,"Wrong saved scalar values.");
 Check(first[gain+"_mute"].Number==1&&second[gain+"_mute"].Number==0,"Wrong boolean values.");
@@ -20,12 +22,8 @@ Check(!new SnapshotDatum(null,"0",true).SameValue(new(0,null,false)),"String and
 Check(!first.ContainsKey(gain+"_missing"),"Missing control must remain absent.");
 Check(!first[gain+"_gain"].SameValue(second[gain+"_gain"])&&first[gain+"_bypass"].SameValue(second[gain+"_bypass"]),"Typed comparison failed.");
 Check(SnapshotPayload.Read(File.ReadAllBytes(Path.Combine(args[0],"controlset.global.snapshot.0"))).Count>=20,"Larger native Global payload failed.");
-Reject(bytes[..^1],"Truncated trailer accepted.");Reject(bytes[..31],"Tiny file accepted.");
-var invalid=(byte[])bytes.Clone();invalid[0]=(byte)'x';Reject(invalid,"Unknown encoding accepted.");
-invalid=(byte[])bytes.Clone();invalid[1]=0;Reject(invalid,"Zero-length compression token accepted.");
-invalid=(byte[])bytes.Clone();invalid[1]=0x81;invalid[2]=1;Reject(invalid,"Back-reference before beginning accepted.");
-invalid=(byte[])bytes.Clone();invalid[^1]=(byte)'?';Reject(invalid,"Malformed trailer accepted.");
-Reject(new byte[SnapshotPayload.MaximumFileBytes+1],"Oversized file accepted.");
+CheckCorruption(nativeBytes);
+}
 // Synthetic malformed records check rejection paths; no fixture or native file
 // is rewritten. The all-zero trailer intentionally tests shape, not a checksum.
 byte[] Frame(byte[] body)
@@ -41,9 +39,24 @@ byte[] Body(Action<BinaryWriter> records,int count=1)
 }
 void Key(BinaryWriter writer){writer.Write((byte)'s');writer.Write(1);writer.Write((byte)'k');}
 void Number(BinaryWriter writer){Key(writer);writer.Write((byte)'i');writer.Write(7);writer.Write((byte)'e');writer.Write(1f);}
+var bytes=Frame(Body(Number));
+var parsed=SnapshotPayload.Read(bytes);
+Check(parsed.Count==1&&parsed["k"].Number==1,"Synthetic scalar failed to decode.");
+Check(!new SnapshotDatum(null,"0",true).SameValue(new(0,null,false)),"Typed values must differ.");
+Check(new SnapshotDatum(null,null,true).SameValue(new(null,"",true)),"Null text must match empty feedback.");
+CheckCorruption(bytes);
+void CheckCorruption(byte[] bytes)
+{
+Reject(bytes[..^1],"Truncated trailer accepted.");Reject(bytes[..31],"Tiny file accepted.");
+var invalid=(byte[])bytes.Clone();invalid[0]=(byte)'x';Reject(invalid,"Unknown encoding accepted.");
+invalid=(byte[])bytes.Clone();invalid[1]=0;Reject(invalid,"Zero-length compression token accepted.");
+invalid=(byte[])bytes.Clone();invalid[1]=0x81;invalid[2]=1;Reject(invalid,"Back-reference before beginning accepted.");
+invalid=(byte[])bytes.Clone();invalid[^1]=(byte)'?';Reject(invalid,"Malformed trailer accepted.");
+Reject(new byte[SnapshotPayload.MaximumFileBytes+1],"Oversized file accepted.");
+}
 Reject(Frame(Body(w=>{Key(w);w.Write((byte)'i');w.Write(99);})),"Unknown value type accepted.");
 Reject(Frame(Body(w=>{Number(w);Number(w);},2)),"Duplicate control IDs accepted.");
 Reject(Frame(Body(w=>{Number(w);w.Write((byte)0);})),"Trailing records accepted.");
 Reject(Frame(Body(w=>{Key(w);w.Write((byte)'i');w.Write(4);w.Write((byte)'s');w.Write(1);w.Write((byte)0xff);})),"Invalid UTF-8 accepted.");
 Reject(Frame(Body(w=>{},100001)),"Unbounded record count accepted.");
-Console.WriteLine($"{checks} snapshot payload and comparison checks passed against the native fixture.");
+Console.WriteLine($"{checks} snapshot payload and comparison checks passed ({(args.Length==1 ? "portable + supplied native fixture" : "portable synthetic cases only")}).");

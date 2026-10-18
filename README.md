@@ -9,3 +9,7 @@ Requires [Q-SYS Mods Core](https://github.com/joshua-small/qsys-mods-core) 0.1.x
 Clone Core beside this repository, then build `Designer.Modules.SnapshotInspector.csproj` with .NET 10.0.112 and local `DesignerDir` references. `tests/SnapshotPayloadChecks` takes a retained native fixture directory as its sole argument; its 23 checks pass against long UTF-8 text, scalar, boolean, global, and malformed payload cases. Fixtures and Q-SYS binaries stay local. Core's native driver checks the same inspector across a live theme toggle. Hardware/Core transport behavior has not been revalidated by the split.
 
 Extracted from Schematic Tools commit `13c52e6`. [Split tracking](https://github.com/joshua-small/qsys-schematic-tools/issues/4).
+
+### Offline regression checks
+
+Run `dotnet run --project tests/SnapshotPayloadChecks` with .NET 10 for synthetic scalar/comparison cases and malformed-frame rejection. To additionally test a retained native snapshot fixture, append `-- <fixture-directory>`. CI runs portable synthetic cases only; native fixture, WPF, Designer and hardware acceptance remain separate.
