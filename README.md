@@ -12,7 +12,9 @@ Extracted from Schematic Tools commit `13c52e6`. [Split tracking](https://github
 
 ### Offline regression checks
 
-Run `dotnet run --project tests/SnapshotPayloadChecks` with .NET 10 for synthetic scalar/comparison cases and malformed-frame rejection. To additionally test a retained native snapshot fixture, append `-- <fixture-directory>`. CI runs portable synthetic cases only; native fixture, WPF, Designer and hardware acceptance remain separate.
+Run `dotnet run --project tests/SnapshotPayloadChecks` with .NET 10 for synthetic scalar/comparison cases and compressed-frame validation. The checks cover overlapping references, all distance-bit combinations through 1,023 bytes, truncated/invalid tokens, and successful decoding at the 32 MiB expansion cap with rejection one byte above it. They also check that reading or rejecting these compressed frames leaves input bytes unchanged. To additionally test a retained native snapshot fixture, append `-- <fixture-directory>`.
+
+CI runs portable synthetic cases only; native fixture, WPF, Designer and hardware acceptance remain separate. The synthetic trailer checks its shape only; these tests do not establish checksum validation or support for additional snapshot formats.
 
 Run `dotnet run --project tests/WorkspaceChecks` for generated-workspace membership, identity, bounds, cancellation and transaction-coordination tests. These link the production planning helpers; they do not simulate Designer acceptance.
 
