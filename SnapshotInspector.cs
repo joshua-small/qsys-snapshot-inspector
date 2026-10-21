@@ -25,15 +25,26 @@ internal sealed class SnapshotInspector : Window
         DockPanel.SetDock(go, Dock.Right); top.Children.Add(go); top.Children.Add(banks); top.Children.Add(search);
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
         DockPanel.SetDock(actions, Dock.Top); root.Children.Add(actions);
-        var gather = new Button { Content = "Create control page from results", Padding = new Thickness(10, 4, 10, 4) }; actions.Children.Add(gather);
+        var gather = new Button { Content = "Create / update workspace...", Padding = new Thickness(10, 4, 10, 4) }; actions.Children.Add(gather);
         var compare = new Button { Content = "Compare values...", Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(12, 0, 0, 0) }; actions.Children.Add(compare);
         compare.Click += (_, _) => new SnapshotComparison((banks.SelectedItem as BankChoice)?.Bank).Show();
         gather.Click += (_, _) =>
         {
             try
             {
-                SnapshotWorkspace.Create(rows.Items.OfType<SnapshotRow>().ToArray(), (banks.SelectedItem as BankChoice)?.Name ?? "Controls");
-                status.Text = "Created a page of linked controls. Save the design to keep it. Undo removes the new page.";
+                var selected = banks.SelectedItem as BankChoice;
+                object? bank = selected?.Bank;
+                string[] terms = search.Text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                SnapshotRow[] ReadRows()
+                {
+                    SnapshotTools.Refresh();
+                    if (bank is not null && !SnapshotHost.Items(SnapshotHost.Get(SnapshotHost.Document, "Snapshots")).Any(b => ReferenceEquals(b, bank)))
+                        throw new InvalidOperationException("The selected snapshot bank is no longer available.");
+                    return SnapshotTools.Model.Rows.Where(r => (bank is null || ReferenceEquals(bank, r.BankObject))
+                        && terms.All(t => $"{r.Bank} {r.Path} {r.Component} {r.Control} {r.ControlId} {r.IncludedBy}".Contains(t, StringComparison.OrdinalIgnoreCase))).ToArray();
+                }
+                var workspace = new WorkspaceWindow(this, ReadRows, selected?.Name ?? "Controls");
+                if (workspace.ShowDialog() is true) status.Text = workspace.Result;
             }
             catch (Exception ex) { status.Text = ex.GetBaseException().Message; }
         };
@@ -47,6 +58,7 @@ internal sealed class SnapshotInspector : Window
         PreviewKeyDown += (_, args) => { if (args.Key == Key.Escape && search.Text.Length > 0) { search.Clear(); args.Handled = true; } else if (args.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) { search.Focus(); search.SelectAll(); args.Handled = true; } };
         SnapshotTools.Changed += Reload; Closed += (_, _) => SnapshotTools.Changed -= Reload;
         Reload();
+        ModControls.Bindings.AttachDocumentHistory(this);
     }
     internal void SelectBank(object? bank) => banks.SelectedItem = banks.Items.OfType<BankChoice>().FirstOrDefault(b => ReferenceEquals(b.Bank, bank)) ?? banks.Items[0];
     private void Reload()
