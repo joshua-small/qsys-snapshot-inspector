@@ -21,3 +21,7 @@ Run `dotnet run --project tests/WorkspaceChecks` for generated-workspace members
 **Create / update workspace...** previews a new schematic page, a Popup on an existing schematic page, or an update to a workspace created by this feature. Existing controls retain their positions, annotations and bindings. Obsolete controls are kept by default; removal requires an explicit selection in the preview. See [workspace behavior and acceptance limits](WORKSPACES.md).
 
 The native page/Popup adapter is implemented for the exact supported host contract and builds successfully. New generation/update, persistence, cancellation and Undo/Redo behavior still require scoped Designer acceptance. Earlier page-generation acceptance does not establish this new path.
+
+## Window and interaction behavior
+
+The original generated snapshot page uses the native page background and black model label text so Designer can render the labels correctly in light and dark themes. Workspace update and Popup behavior have separate acceptance scope.

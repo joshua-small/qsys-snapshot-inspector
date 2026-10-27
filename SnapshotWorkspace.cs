@@ -28,8 +28,8 @@ internal static class SnapshotWorkspace
         var names = SnapshotHost.Items(pages).Select(p => SnapshotHost.Text(p, "Title")).ToHashSet(StringComparer.OrdinalIgnoreCase);
         while (names.Contains(uniqueTitle)) uniqueTitle = baseTitle + " " + suffix++;
         SnapshotHost.Set(page, "Title", uniqueTitle);
-        // Persist contrast with the page instead of relying on this editor's theme.
-        SnapshotHost.Set(page, "PageBackgroundColor", 0xff282b2eu);
+        // Let the native page and label colors follow the editor theme.
+        SnapshotHost.Set(page, "PageBackgroundColor", 0u);
         var layer = SnapshotHost.Get(page, "CurrentLayer")!;
         double y = 30; int count = 0; var skipped = new List<string>();
         Label(layer, "Snapshot controls · " + title, 30, y, 1000, 32, 18); y += 45;
@@ -78,7 +78,7 @@ internal static class SnapshotWorkspace
         var label = Activator.CreateInstance(SnapshotHost.Type("Design.Graphics.TextBlock"))!;
         SnapshotHost.Set(label, "Label", text); SnapshotHost.Set(label, "Position", new Point(x, y));
         SnapshotHost.Set(label, "Size", new Size(width, height)); SnapshotHost.Set(label, "FontSize", fontSize);
-        SnapshotHost.Set(label, "Color", Colors.White); SnapshotHost.Set(label, "Fill", Colors.Transparent);
+        SnapshotHost.Set(label, "Color", Colors.Black); SnapshotHost.Set(label, "Fill", Colors.Transparent);
         SnapshotHost.Set(label, "HorizontalTextAlignment", Enum.Parse(label.GetType().GetProperty("HorizontalTextAlignment")!.PropertyType, "Left"));
         SnapshotHost.Call(layer, "AddChild", label);
     }
