@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text;
 
 namespace Designer.Modules.SnapshotInspector;
 
@@ -40,12 +41,14 @@ internal static class WorkspacePlanner
     internal static string Encode(WorkspaceManifest manifest)
     {
         string text = ManifestPrefix + JsonSerializer.Serialize(manifest);
-        if (text.Length > 2 * 1024 * 1024) throw new InvalidOperationException("Workspace ownership information exceeds its size limit.");
+        if (text.Length > 2 * 1024 * 1024 || Encoding.UTF8.GetByteCount(text) > 2 * 1024 * 1024)
+            throw new InvalidOperationException("Workspace ownership information exceeds its size limit.");
         return text;
     }
     internal static WorkspaceManifest Decode(string text, string canvasId)
     {
-        if (text.Length > 2 * 1024 * 1024 || !text.StartsWith(ManifestPrefix, StringComparison.Ordinal))
+        if (text.Length > 2 * 1024 * 1024 || !text.StartsWith(ManifestPrefix, StringComparison.Ordinal)
+            || Encoding.UTF8.GetByteCount(text) > 2 * 1024 * 1024)
             throw new InvalidOperationException("This workspace has invalid ownership information.");
         WorkspaceManifest manifest;
         try { manifest = JsonSerializer.Deserialize<WorkspaceManifest>(text[ManifestPrefix.Length..])!; }

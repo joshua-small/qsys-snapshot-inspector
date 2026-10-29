@@ -102,18 +102,16 @@ internal static class WorkspaceAdapter
             {
                 canvas = Activator.CreateInstance(SnapshotHost.Type("Design.Canvas"))!;
                 SnapshotHost.Set(canvas, "Title", UniqueTitle(preview.Document, "Snapshot controls - " + preview.Title));
-                SnapshotHost.Set(canvas, "PageBackgroundColor", 0xff282b2eu);
+                SnapshotHost.Set(canvas, "PageBackgroundColor", 0u);
             }
             else if (destination.Kind == WorkspaceDestinationKind.NewPopup)
             {
                 popup = Activator.CreateInstance(SnapshotHost.Type("Design.Graphics.Popup"), nonPublic: true)!;
                 canvas = SnapshotHost.Get(popup, "Content") ?? throw new InvalidOperationException("Popup content is unavailable.");
-                SnapshotHost.Set(canvas, "Color", Color.FromRgb(40, 43, 46));
                 SnapshotHost.Set(popup, "Label", "Snapshot controls - " + preview.Title);
                 SnapshotHost.Set(popup, "Position", new Point(30, Bottom(destination.Page!) + 30));
                 SnapshotHost.Set(popup, "Size", new Size(240, 40));
-                SnapshotHost.Set(popup, "BackgroundColor", Color.FromRgb(40, 43, 46));
-                SnapshotHost.Set(popup, "Color", Colors.White);
+                SnapshotHost.Set(popup, "Color", Colors.Black);
             }
             if (canvas is null) throw new InvalidOperationException("No workspace canvas is available.");
             var layer = LayerFor(canvas);
@@ -219,6 +217,7 @@ internal static class WorkspaceAdapter
 
         bool Current()
         {
+            if (SnapshotHost.Get(SnapshotHost.Type("Tools.Set"), "IsEditToolActive") is not true) return false;
             if (!ReferenceEquals(preview.Document, SnapshotHost.Document)) return false;
             CheckDestination(preview.Document, destination);
             var rows = readRows();
@@ -277,10 +276,8 @@ internal static class WorkspaceAdapter
             currentLayer = SnapshotHost.Text(LayerFor(canvas), "Id"),
             popup = destination.Popup is null ? null : new[] { "Position", "Size", "PopupWidth1", "PopupWidth2", "PopupHeight1", "PopupHeight2", "PopupMargin", "IsLocked" }.Select(p => SnapshotHost.Text(destination.Popup, p)).ToArray(),
             layers = Layers(canvas).Select(l => new { id = SnapshotHost.Text(l, "Id"), locked = SnapshotHost.Get(l, "IsLocked") }),
-            objects = Objects(canvas).Select(o => new { type = o.GetType().FullName,
-                position = SnapshotHost.Text(o, "Position"), size = SnapshotHost.Text(o, "Size"),
-                label = SnapshotHost.Text(o, "Label"), classes = SnapshotHost.Text(o, "CssClassName"),
-                locked = SnapshotHost.Get(o, "IsLocked"), hidden = SnapshotHost.Get(o, "IsHidden"), binding = Binding(o) }) });
+            locked = SnapshotHost.Get(canvas, "IsLocked"),
+            objects = Objects(canvas).Select(o => new { type = o.GetType().FullName, stamp = ObjectStamp(o) }) });
     }
     private static string UniqueTitle(object document, string title)
     {
@@ -293,7 +290,8 @@ internal static class WorkspaceAdapter
         var label = Activator.CreateInstance(SnapshotHost.Type("Design.Graphics.TextBlock"))!;
         SnapshotHost.Set(label, "Label", text); SnapshotHost.Set(label, "Position", new Point(x, y));
         SnapshotHost.Set(label, "Size", new Size(width, height)); SnapshotHost.Set(label, "FontSize", 12.0);
-        SnapshotHost.Set(label, "Color", Colors.White); SnapshotHost.Set(label, "Fill", Colors.Transparent);
+        SnapshotHost.Set(label, "Color", Colors.Black); SnapshotHost.Set(label, "Fill", Colors.Transparent);
+        SnapshotHost.Set(label, "HorizontalTextAlignment", Enum.Parse(label.GetType().GetProperty("HorizontalTextAlignment")!.PropertyType, "Left"));
         return label;
     }
     private static void CheckUnlocked(object item)
@@ -309,6 +307,8 @@ internal static class WorkspaceAdapter
             throw new InvalidOperationException("The destination Popup is no longer on this page.");
         if (destination.Canvas is not null && SnapshotHost.Get(destination.Canvas, "IsAttached") is not true)
             throw new InvalidOperationException("The destination workspace is no longer attached.");
+        CheckUnlocked(destination.Page!);
+        if (destination.Canvas is not null) CheckUnlocked(destination.Canvas);
         CheckUnlocked(LayerFor((destination.Canvas ?? destination.Page)!));
         if (destination.Popup is not null)
         {
@@ -319,7 +319,7 @@ internal static class WorkspaceAdapter
     private static void Guard()
     {
         if (!Host.Enabled || SnapshotHost.Get(SnapshotHost.Type("Tools.Set"), "IsEditToolActive") is not true)
-            throw new InvalidOperationException("Workspace edits require the supported Designer build in Design mode.");
+            throw new InvalidOperationException("Workspace edits require Design mode and a Designer build enabled by Mods Core.");
         var popupType = SnapshotHost.Type("Design.Graphics.Popup");
         if (popupType.GetProperty("Content", SnapshotHost.Flags)?.PropertyType.FullName != "QSC.QSys.Design.Graphics.PopupPage")
             throw new InvalidOperationException("This Designer Popup contract is unsupported.");

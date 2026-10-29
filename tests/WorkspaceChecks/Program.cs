@@ -64,6 +64,9 @@ Reject(() => WorkspacePlanner.Decode(WorkspacePlanner.ManifestPrefix + "null", "
 Reject(() => WorkspacePlanner.Decode(WorkspacePlanner.Encode(first.Next with { Version = 2 }), "canvas-one"), "unsupported");
 Reject(() => WorkspacePlanner.Decode(WorkspacePlanner.Encode(first.Next with { Controls = [first.Next.Controls[0], first.Next.Controls[0]] }), "canvas-one"), "duplicate");
 Reject(() => WorkspacePlanner.Decode(new string('x', 2 * 1024 * 1024 + 1), "canvas-one"), "invalid ownership");
+string unicodeCanvas = new('界', 800000);
+string unicodeManifest = WorkspacePlanner.ManifestPrefix + "{\"Version\":1,\"WorkspaceId\":\"" + Guid.NewGuid().ToString("N") + "\",\"CanvasId\":\"" + unicodeCanvas + "\",\"Controls\":[]}";
+Reject(() => WorkspacePlanner.Decode(unicodeManifest, unicodeCanvas), "invalid ownership");
 Reject(() => WorkspacePlanner.Encode(first.Next with { CanvasId = new string('x', 2 * 1024 * 1024) }), "size limit");
 string token = first.Next.Controls[0].Token;
 Check(WorkspacePlanner.ControlToken("owner-style " + WorkspacePlanner.ControlPrefix + token + " another-style") == token, "Owner CSS classes obscured identity.");
