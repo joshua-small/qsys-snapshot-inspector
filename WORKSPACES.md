@@ -1,6 +1,6 @@
 # Generated snapshot workspaces
 
-This is an unreleased feature. Portable planning/adapter checks and compilation do not establish native Designer acceptance. Use Design mode and Core 0.1.10 or newer within 0.1.x. Untested Designer builds require Mod Manager 0.10.0+ exact-build consent; 10.5.0 acceptance does not carry over to 10.5.1.
+Portable planning/adapter checks and compilation do not establish native Designer acceptance. Use Design mode and Core 0.1.10 or newer within 0.1.x. Untested Designer builds require Mod Manager 0.10.0+ exact-build consent; 10.5.0 acceptance does not carry over to 10.5.1.
 
 ## Create and update
 
@@ -29,7 +29,7 @@ Obsolete controls are kept by default and recorded as inactive membership. If th
 
 The destination scope is schematic pages and native schematic Popups. UCI, plugin-panel and Container destinations are not implemented by this feature.
 
-## Native acceptance still required
+## Validate on your Designer build
 
 On a disposable design, verify both page and Popup generation, real linked bindings, ownership persistence after save/reopen, and plain-Designer reopen without the mod. Exercise overlapping banks, add/remove/rejoin cycles, edited widget positions/styles, owner annotations, grouped/locked objects and repeated no-op updates. Confirm the exact Popup child route and sizing visually.
 

@@ -20,11 +20,11 @@ Run `dotnet run --project tests/WorkspaceChecks` for generated-workspace members
 
 Run `dotnet run --project tests/WorkspaceAdapterChecks` for the production adapter against portable host-contract fixtures. These check construction, bindings, preserved layout, native-background model values, rollback coordination, no-ops and stale mode/style rejection. They do not execute Designer or establish actual native history or persistence.
 
-### Generated workspaces (unreleased)
+### Generated workspaces
 
 **Create / update workspace...** previews a new schematic page, a Popup on an existing schematic page, or an update to a workspace created by this feature. Existing controls retain their positions, annotations and bindings. Obsolete controls are kept by default; removal requires an explicit selection in the preview. See [workspace behavior and acceptance limits](WORKSPACES.md).
 
-The native page/Popup adapter uses native Popup content canvases, linked controls and document operations. It checks Design mode, Core's build gate and the required Popup type before editing. New generation/update, persistence, cancellation and Undo/Redo behavior still require scoped Designer acceptance on the exact candidate and host build. Earlier page-generation acceptance does not establish this new path.
+The native page/Popup adapter uses native Popup content canvases, linked controls and document operations. It checks Design mode, Core's build gate and the required Popup type before editing. Validate generation, updates, persistence, cancellation and Undo/Redo on the Designer build you use before relying on a generated workspace. Portable checks do not establish native application behavior, and results from another build do not establish compatibility.
 
 ## Window and interaction behavior
 
