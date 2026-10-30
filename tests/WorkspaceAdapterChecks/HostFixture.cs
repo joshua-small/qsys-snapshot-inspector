@@ -45,9 +45,15 @@ namespace QSC.QSys.Design
 {
     public class Element
     {
+        public static Predicate<Element>? AttachFailure { get; set; }
         public bool IsAttached { get; set; }
         public bool IsLocked { get; set; }
-        public virtual void Attach(bool value) => IsAttached = value;
+        public void Attach() => Attach(true);
+        public virtual void Attach(bool value)
+        {
+            if (value && AttachFailure?.Invoke(this) is true) throw new InvalidOperationException("Injected native attachment failure");
+            IsAttached = value;
+        }
     }
     public class Object : Element
     {
@@ -78,7 +84,8 @@ namespace QSC.QSys.Design
         public void AddChild(Object value)
         {
             if (canvas.IsAttached) App.Manager.Record(() => { Children.Remove(value); value.Attach(false); value.Layer = null; });
-            Children.Add(value); value.Layer = this; value.Attach(canvas.IsAttached);
+            // Layer insertion and element attachment are separate native operations.
+            Children.Add(value); value.Layer = this;
         }
         public void RemoveChild(Object value)
         {

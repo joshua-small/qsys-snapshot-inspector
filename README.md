@@ -18,7 +18,7 @@ CI runs portable synthetic cases only; native fixture, WPF, Designer and hardwar
 
 Run `dotnet run --project tests/WorkspaceChecks` for generated-workspace membership, identity, bounds, cancellation and transaction-coordination tests. These link the production planning helpers; they do not simulate Designer acceptance.
 
-Run `dotnet run --project tests/WorkspaceAdapterChecks` for the production adapter against portable host-contract fixtures. These check construction, bindings, preserved layout, native-background model values, rollback coordination, no-ops and stale mode/style rejection. They do not execute Designer or establish actual native history or persistence.
+Run `dotnet run --project tests/WorkspaceAdapterChecks` for the production adapter against portable host-contract fixtures. These check construction, explicit attachment after insertion into an existing layer, bindings, preserved layout, native-background model values, rollback after attachment failures, no-ops and stale mode/style rejection. They do not execute Designer or establish actual native history or persistence.
 
 ### Generated workspaces
 

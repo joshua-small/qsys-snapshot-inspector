@@ -133,8 +133,8 @@ internal static class WorkspaceAdapter
                 SnapshotHost.Set(widget, "CssClassName", (classes + " " + WorkspacePlanner.ControlPrefix + owned.Token).Trim());
                 SnapshotHost.Set(widget, "Position", new Point(340, y));
                 var label = Label(member.Caption + "\n" + string.Join(", ", member.Banks), 30, y, 290, nextY - y - 10);
-                SnapshotHost.Call(layer, "AddChild", label);
-                SnapshotHost.Call(layer, "AddChild", widget);
+                AddToLayer(layer, label);
+                AddToLayer(layer, widget);
                 created.Add((widget, owned.Token, member.Key));
                 y = nextY;
             }
@@ -155,7 +155,7 @@ internal static class WorkspaceAdapter
                 SnapshotHost.Set(marker, "CssClassName", WorkspacePlanner.ManifestClass);
                 SnapshotHost.Set(marker, "IsHidden", true);
                 SnapshotHost.Set(marker, "Label", WorkspacePlanner.Encode(finalManifest));
-                SnapshotHost.Call(layer, "AddChild", marker);
+                AddToLayer(layer, marker);
             }
             else SnapshotHost.Set(marker, "Label", WorkspacePlanner.Encode(finalManifest));
             if (destination.Kind == WorkspaceDestinationKind.NewPopup)
@@ -165,7 +165,7 @@ internal static class WorkspaceAdapter
                 SnapshotHost.Set(popup!, "PopupWidth1", 0.0); SnapshotHost.Set(popup!, "PopupWidth2", Math.Ceiling(right + 36));
                 SnapshotHost.Set(popup!, "PopupHeight1", 0.0); SnapshotHost.Set(popup!, "PopupHeight2", Math.Ceiling(bottom + 36));
                 var parentLayer = LayerFor(destination.Page!);
-                CheckUnlocked(parentLayer); SnapshotHost.Call(parentLayer, "AddChild", popup);
+                CheckUnlocked(parentLayer); AddToLayer(parentLayer, popup!);
             }
             else if (destination.Kind == WorkspaceDestinationKind.NewPage)
                 SnapshotHost.Call(SnapshotHost.Get(preview.Document, "Pages")!, "Add", canvas);
@@ -247,6 +247,13 @@ internal static class WorkspaceAdapter
         return new(SnapshotHost.Text(value, "Id"), SnapshotHost.Text(value, "Name"));
     }
     private static object[] Layers(object canvas) => SnapshotHost.Items(SnapshotHost.Get(canvas, "Layers"));
+    private static void AddToLayer(object layer, object child)
+    {
+        SnapshotHost.Call(layer, "AddChild", child);
+        // Inserting into an attached layer does not attach the child. A new canvas attaches its children later.
+        if (SnapshotHost.Get(layer, "IsAttached") is true)
+            SnapshotHost.Call(child, "Attach");
+    }
     // Avoid the host's lazy CurrentLayer getter while inspecting a preview.
     private static object LayerFor(object canvas) => Layers(canvas).FirstOrDefault(l => SnapshotHost.Get(l, "IsCurrentLayer") is true)
         ?? Layers(canvas).FirstOrDefault() ?? throw new InvalidOperationException("The destination has no layers.");
