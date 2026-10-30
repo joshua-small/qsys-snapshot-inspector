@@ -59,4 +59,5 @@ Reject(Frame(Body(w=>{Number(w);Number(w);},2)),"Duplicate control IDs accepted.
 Reject(Frame(Body(w=>{Number(w);w.Write((byte)0);})),"Trailing records accepted.");
 Reject(Frame(Body(w=>{Key(w);w.Write((byte)'i');w.Write(4);w.Write((byte)'s');w.Write(1);w.Write((byte)0xff);})),"Invalid UTF-8 accepted.");
 Reject(Frame(Body(w=>{},100001)),"Unbounded record count accepted.");
+CompressionChecks.Run(Check);
 Console.WriteLine($"{checks} snapshot payload and comparison checks passed ({(args.Length==1 ? "portable + supplied native fixture" : "portable synthetic cases only")}).");

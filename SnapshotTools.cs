@@ -1,9 +1,7 @@
 using QsysMods.Core;
 using System.Collections;
-using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -37,24 +35,21 @@ internal static class SnapshotTools
     {
         if (installed) return;
         receipt = report;
-        string hostPath = SnapshotHost.Type("Graphic.Controls.ControlBase").Assembly.Location;
-        string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(hostPath))).ToLowerInvariant();
-        if (hash != Host.DesignerHash) throw new InvalidOperationException("Snapshot indicators require the inspected Designer 10.5 build.");
         var control = SnapshotHost.Type("Graphic.Controls.ControlBase");
-        var draw = control.GetMethod("DrawIsNamed", SnapshotHost.Flags)!;
-        var sidebarConstructor = SnapshotHost.Type("windows.DesignElementViewers.SnapshotViewer").GetConstructor(Type.EmptyTypes)!;
-        var hover = control.Assembly.GetTypes().Where(t => control.IsAssignableFrom(t))
-            .Select(t => t.GetProperty("HoverText", SnapshotHost.Flags | BindingFlags.DeclaredOnly)?.GetMethod).OfType<MethodInfo>().ToArray();
-        foreach (var target in hover.Cast<MethodBase>().Append(draw).Append(sidebarConstructor))
+        SnapshotStartup.RequireBuild(Host.Enabled, AppContext.BaseDirectory, control.Assembly.Location,
+            typeof(global::Designer.Modules.Common.IDesignerModule).Assembly.Location);
+        var sidebar = SnapshotHost.Type("windows.DesignElementViewers.SnapshotViewer");
+        var targets = SnapshotStartup.Resolve(control, sidebar, typeof(DrawingContext), control.Assembly.GetTypes());
+        foreach (var target in targets.All)
             if (Harmony.GetPatchInfo(target)?.Owners.Any() is true) throw new InvalidOperationException("Snapshot drawing/hover hook is already modified: " + target);
         Fill.Freeze(); Stroke.Freeze();
         var harmony = new Harmony(PatchId);
         try
         {
-            harmony.Patch(draw, postfix: new HarmonyMethod(typeof(SnapshotTools), nameof(Draw)));
-            foreach (var target in hover) harmony.Patch(target, postfix: new HarmonyMethod(typeof(SnapshotTools), nameof(Hover)));
-            harmony.Patch(sidebarConstructor, postfix: new HarmonyMethod(typeof(SnapshotTools), nameof(SidebarConstructed)));
-            EventManager.RegisterClassHandler(SnapshotHost.Type("windows.DesignElementViewers.SnapshotViewer"), FrameworkElement.LoadedEvent, new RoutedEventHandler(SidebarLoaded), true);
+            harmony.Patch(targets.Draw, postfix: new HarmonyMethod(typeof(SnapshotTools), nameof(Draw)));
+            foreach (var target in targets.Hover) harmony.Patch(target, postfix: new HarmonyMethod(typeof(SnapshotTools), nameof(Hover)));
+            harmony.Patch(targets.Sidebar, postfix: new HarmonyMethod(typeof(SnapshotTools), nameof(SidebarConstructed)));
+            EventManager.RegisterClassHandler(sidebar, FrameworkElement.LoadedEvent, new RoutedEventHandler(SidebarLoaded), true);
             documentWatcher = new DispatcherTimer(DispatcherPriority.ContextIdle) { Interval = TimeSpan.FromMilliseconds(500) };
             documentWatcher.Tick += (_, _) =>
             {
@@ -66,7 +61,7 @@ internal static class SnapshotTools
                 }
             };
             documentWatcher.Start(); installed = true; QueueRefresh();
-            Report("snapshot-tools-installed", new { fill = "#f39e77", stroke = "#ff8c00", radius = 3, strokeWidth = 0.5, globalExcluded = true, hoverHooks = hover.Length });
+            Report("snapshot-tools-installed", new { fill = "#f39e77", stroke = "#ff8c00", radius = 3, strokeWidth = 0.5, globalExcluded = true, hoverHooks = targets.Hover.Length });
         }
         catch { harmony.UnpatchAll(PatchId); throw; }
     }

@@ -11,3 +11,6 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: dotnet run --project tests/SnapshotPayloadChecks
+      - run: dotnet run --project tests/WorkspaceChecks
+      - run: dotnet run --project tests/WorkspaceAdapterChecks
+      - run: dotnet run --project tests/SnapshotStartupChecks
