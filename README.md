@@ -26,6 +26,8 @@ Run `dotnet run --project tests/WorkspaceAdapterChecks` for the production adapt
 
 The native page/Popup adapter uses native Popup content canvases, linked controls and document operations. It checks Design mode, Core's build gate and the required Popup type before editing. Validate generation, updates, persistence, cancellation and Undo/Redo on the Designer build you use before relying on a generated workspace. Portable checks do not establish native application behavior, and results from another build do not establish compatibility.
 
+Targeted native model checks on Designer 10.5.0 with Mods Core 0.1.11 passed for Popup creation, additions to existing pages and Popups, membership retirement/rejoin, explicit removal, Undo/Redo and safe rejection. The checks include preservation of retained widget references, layout, bindings and ownership. Popup appearance was spot-checked in light and dark themes. Corrected-file and plain-Designer reopening and targeted 10.5.1 startup/use remain separate validation work; stored snapshot payloads and runtime values were not validated by these workspace fixtures.
+
 ## Window and interaction behavior
 
 Both page-generation paths use the native page background and black model label text so Designer can render the labels in light and dark themes. New Popups keep native background defaults and use black model text. Existing workspaces retain owner colors and styling. Workspace update and Popup rendering have separate acceptance scope.

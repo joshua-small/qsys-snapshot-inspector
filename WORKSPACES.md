@@ -31,6 +31,8 @@ The destination scope is schematic pages and native schematic Popups. UCI, plugi
 
 ## Validate on your Designer build
 
+Targeted native model checks on Designer 10.5.0 with Mods Core 0.1.11 passed for Popup creation, appending controls to existing page and Popup workspaces, retirement/rejoin, explicit removal, Undo/Redo and safe rejection. Retained object references, layout, bindings and ownership were preserved in these checks. Popup appearance was spot-checked in light and dark themes; this is not a general widget/theme matrix. Saving a design does not establish successful reopening; corrected-file and plain-Designer reopen and targeted 10.5.1 startup/use remain separate. Stored snapshot payloads and runtime values were not validated by these fixtures. Injected native failure/rollback and uncertain-commit paths require their own observations.
+
 On a disposable design, verify both page and Popup generation, real linked bindings, ownership persistence after save/reopen, and plain-Designer reopen without the mod. Exercise overlapping banks, add/remove/rejoin cycles, edited widget positions/styles, owner annotations, grouped/locked objects and repeated no-op updates. Confirm the exact Popup child route and sizing visually.
 
 Check one-step Undo/Redo after creation and an update, including Inspector focus and search-box local undo. Check cancellation, injected setter/verification failure with rollback, source/destination/document changes between preview and Apply, and uncertain-commit reporting. Confirm the original controls and saved snapshots remain unchanged. Viewer/Core behavior and other host versions need separate acceptance.
